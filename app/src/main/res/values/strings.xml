@@ -1,0 +1,45 @@
+<resources>
+    <string name="app_name">News Portal</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_search">Pesquisar</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="title_detail">Detalhe</string>
+
+    <string name="action_sign_in">Entrar</string>
+    <string name="action_sign_up">Cadastrar</string>
+    <string name="prompt_name">Nome</string>
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Senha</string>
+    <string name="prompt_password_confirm">Confirmar senha</string>
+
+    <string name="invalid_name">O nome deve ter mais de 5 caracteres</string>
+    <string name="invalid_username">O email não é válido</string>
+    <string name="invalid_password">A senha deve ter mais de 5 caracteres</string>
+    <string name="confirm_password">As senhas não conferem</string>
+
+
+    <string name="alert_title">Saindo</string>
+    <string name="alert_message">Deseja realmente sair da aplicação</string>
+    <string name="alert_button_cancel">Não</string>
+    <string name="alert_button_confirm">Sim</string>
+    <string name="text_sair">Sair</string>
+    <string name="text_data_inicial">Data Inicial</string>
+    <string name="text_data_final">Data Final</string>
+    <string name="text_button_aplicar">Aplicar</string>
+    <string name="text_button_clear">Limpar</string>
+    <string name="image_share">image share</string>
+    <string name="image_view_highlights">Image View Highlights</string>
+    <string name="not_favorite">Desfavoritar</string>
+    <string name="favorite">Favoritar</string>
+    <string name="dialog_share_message">Você deseja compartilhar?</string>
+    <string name="dialog_share_title">Compartilhar</string>
+    <string name="show_new">Visualizar notícia</string>
+
+</resources>
