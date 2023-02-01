@@ -26,14 +26,13 @@ class HomeAdapterNewsHighlights(private var users: List<New>) :
     }
 
     interface ClickListener {
-        fun onClickCarousel(position: Int, aView: View)
+        fun onClickCarousel(new: New, position: Int, aView: View)
     }
 
     inner class DataViewHolder(private val itemBinding: ItemNewsHighlightsBinding) :
         RecyclerView.ViewHolder(itemBinding.root),
         View.OnClickListener {
-        fun bind(new: New) {
-            itemBinding.textViewTitleHighlights.text = new.title.substring(0, 40)
+        fun bind(new: New) { itemBinding.textViewTitleHighlights.text = new.title.substring(0, 40)
             try {
                 Glide.with(itemBinding.imageViewHighlights.context)
                     .load(new.image_url)
@@ -50,7 +49,7 @@ class HomeAdapterNewsHighlights(private var users: List<New>) :
         }
 
         override fun onClick(v: View) {
-            mClickListener.onClickCarousel(adapterPosition, v)
+            mClickListener.onClickCarousel(users[adapterPosition], adapterPosition, v)
         }
     }
 

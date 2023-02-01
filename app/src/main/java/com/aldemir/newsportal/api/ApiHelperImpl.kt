@@ -19,7 +19,7 @@ class ApiHelperImpl @Inject constructor(
         current_page: String,
         per_page: String,
         published_at: String
-    ): ResponseNew {
+    ): Response<ResponseNew> {
         return apiService.getAllNews(
             current_page = current_page,
             per_page = per_page,

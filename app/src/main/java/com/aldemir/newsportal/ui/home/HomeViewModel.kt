@@ -1,17 +1,13 @@
 package com.aldemir.newsportal.ui.home
 
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.aldemir.newsportal.api.SessionManager
 import com.aldemir.newsportal.api.models.ResponseNew
 import com.aldemir.newsportal.api.models.ResponseNewHighlights
 import com.aldemir.newsportal.data.repository.NewRepository
 import com.aldemir.newsportal.models.New
-import com.aldemir.newsportal.util.Constants
-import com.aldemir.newsportal.util.Resource
+import com.aldemir.newsportal.util.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,38 +26,31 @@ class HomeViewModel @Inject constructor(
         private const val TAG = "HomeViewModel"
     }
 
-    private val _lastPage = MutableLiveData<Int>()
-    val lastPage: LiveData<Int> = _lastPage
+    private val _lastPage = MutableLiveData<Event<Int>>()
+    val lastPage = _lastPage.asLiveData()
 
-    private val _totalPages = MutableLiveData<Int>()
-    val totalPages: LiveData<Int> = _totalPages
+    private val _totalPages = MutableLiveData<Event<Int>>()
+    val totalPages = _totalPages.asLiveData()
 
-    private val _totalNews = MutableLiveData<Int>()
-    val totalNews: LiveData<Int> = _totalNews
+    private val _totalNews = MutableLiveData<Event<Int>>()
+    val totalNews = _totalNews.asLiveData()
 
-    private val _totalNewsHighLight = MutableLiveData<Int>()
-    val totalNewsHighLight: LiveData<Int> = _totalNewsHighLight
+    private val _totalNewsHighLight = MutableLiveData<Event<Int>>()
+    val totalNewsHighLight = _totalNewsHighLight.asLiveData()
 
-    private val _newsDatabase = MutableLiveData<List<New>>()
-    var newsDatabase: LiveData<List<New>> = _newsDatabase
+    lateinit var newsDatabase: LiveData<List<New>>
 
     private val _newsHighLight = MutableLiveData<List<New>>()
-    var newsHighLight: LiveData<List<New>> = _newsHighLight
+    var newsHighLight = _newsHighLight.asLiveData()
 
 
-    private val _news = MutableLiveData<Resource<List<New>>>((Resource.loading(null)))
-    var news: LiveData<Resource<List<New>>> = _news
+    private val _news = MutableLiveData<Event<Resource<List<New>>>>(Event((Resource.loading(null))))
+    var news = _news.asLiveData()
 
-    private val _newsHighlights = MutableLiveData<Resource<List<New>>>((Resource.loading(null)))
-    var newsHighlights: LiveData<Resource<List<New>>> = _newsHighlights
+    private val _newsHighlights = MutableLiveData<Event<List<New>>>()
+    var newsHighlights = _newsHighlights.asLiveData()
 
-    private val _res = MutableLiveData<Resource<ResponseNewHighlights>>()
-
-    val res : LiveData<Resource<ResponseNewHighlights>>
-        get() = _res
-
-
-    fun getNewsDatabase() {
+    fun getDatabaseNews() {
         try {
             viewModelScope.launch {
                 newsDatabase = newsRepository.getNewsDatabase()
@@ -71,10 +60,10 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun getNewsHighLight(highlight: Boolean) {
+    fun getDatabaseNewsHighLight(highlight: Boolean) {
         try {
             viewModelScope.launch {
-                _newsHighLight.value = newsRepository.getHighLight(highlight)
+                _newsHighLight.value = newsRepository.getDatabaseNewsHighLight(highlight)
             }
         } catch (error: Exception) {
             Log.e(TAG, "ERROR ROOM => : ${error}")
@@ -82,30 +71,38 @@ class HomeViewModel @Inject constructor(
     }
 
     fun getAllNews(lastPage: Int, perPage: Int, countNews: Int) {
+        _news.emit(Resource.loading(null))
         viewModelScope.launch {
             try {
-                val responseNew: ResponseNew = newsRepository.getAllNews(lastPage, perPage)
-                formatNew(responseNew = responseNew, countNews = countNews, lastPage = lastPage)
+                newsRepository.getAllNews(lastPage, perPage).let {
+                    if (it.isSuccessful) {
+                        val news = formatNew(
+                            responseNew = it.body()!!,
+                            countNews = countNews,
+                            lastPage = lastPage
+                        )
+                        _news.emit(Resource.success(news))
+                    } else {
+                        _news.emit(Resource.error("Nenhum notícia encontrada!", null))
+                    }
+                }
             } catch (error: Exception) {
-                Log.e(TAG, "ERROR getAllNews  => : ${error}")
-                _totalNews.value = 0
+                _news.emit((Resource.error("Sem conexão, tente novamente", null)))
+                _totalNews.emit(0)
             }
 
         }
     }
 
     fun getAllNewsHighlights(count: Int) = viewModelScope.launch {
-        _newsHighlights.postValue(Resource.loading(null))
         val mNews: ArrayList<New> = arrayListOf()
         try {
             newsRepository.getAllNewsHighlights().let {
                 if (it.isSuccessful){
                     val result = it.body()!!.data
                     mNews.addAll(formatNewHighlights(responseNew = result, count = count))
-                    _newsHighlights.postValue(Resource.success(mNews))
+                    _newsHighlights.emit(mNews)
                     saveTotalNews(result.size, Constants.NEW_HIGH_LIGHT)
-                }else{
-                    _newsHighlights.postValue(Resource.error(it.errorBody().toString(), null))
                 }
                 if (mNews.size > count) {
                     insertNews(mNews)
@@ -113,18 +110,11 @@ class HomeViewModel @Inject constructor(
             }
         } catch (error: Exception) {
             Log.e(TAG, "ERROR => : ${error}")
-            _newsHighlights.value = (Resource.error("Sem conexão, tente novamente", null))
         }
 
     }
 
-    fun addNewsFavorite(new: New) {
-        viewModelScope.launch(Dispatchers.IO) {
-            newsRepository.updateNew(new)
-        }
-    }
-
-    fun removeNewsFavorite(new: New) {
+    fun updateFavoriteNews(new: New) {
         viewModelScope.launch(Dispatchers.IO) {
             newsRepository.updateNew(new)
         }
@@ -143,19 +133,19 @@ class HomeViewModel @Inject constructor(
     }
 
     fun getLastPage() {
-        _lastPage.value = sessionManager.getLastPage()
+        _lastPage.emit(sessionManager.getLastPage())
     }
 
     fun getTotalPages() {
-        _totalPages.value = sessionManager.getTotalPages()
+        _totalPages.emit(sessionManager.getTotalPages())
     }
 
     fun getTotalNews(tag: String) {
         val totalNews = sessionManager.getTotalNews(tag)
         if (tag == "news") {
-            _totalNews.value = totalNews
+            _totalNews.emit(totalNews)
         } else {
-            _totalNewsHighLight.value = totalNews
+            _totalNewsHighLight.emit(totalNews)
         }
     }
 
@@ -211,7 +201,7 @@ class HomeViewModel @Inject constructor(
                 mNews.add(mNew)
             }
             saveTotalPages(responseNew.pagination.total_pages)
-            _totalNews.value = responseNew.pagination.total_items
+            _totalNews.emit(responseNew.pagination.total_items)
             if (lastPage == responseNew.pagination.total_pages) {
                 saveTotalNews(responseNew.pagination.total_items, Constants.NEW)
             } else {
@@ -219,7 +209,6 @@ class HomeViewModel @Inject constructor(
             }
             insertNews(mNews)
         }
-
         return mNews
     }
 

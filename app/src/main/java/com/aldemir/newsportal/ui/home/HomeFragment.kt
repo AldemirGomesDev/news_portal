@@ -11,7 +11,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,7 +19,9 @@ import com.aldemir.newsportal.databinding.FragmentHomeBinding
 import com.aldemir.newsportal.models.New
 import com.aldemir.newsportal.ui.detail.DetailActivity
 import com.aldemir.newsportal.util.Constants
+import com.aldemir.newsportal.util.Resource
 import com.aldemir.newsportal.util.Status
+import com.aldemir.newsportal.util.onEvent
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import java.util.*
@@ -41,8 +42,6 @@ class HomeFragment : Fragment(),
     private lateinit var homeAdapterNews: HomeAdapterNews
     private lateinit var mContext: Context
     private lateinit var myFixedRateTimer: Timer
-    private val mNews: ArrayList<New> = arrayListOf()
-    private var mNewsCarousel: List<New> = arrayListOf()
     private var mLastPage: Int = 1
     private var mPerPage: Int = 10
     private var mTotalPages: Int = 1
@@ -58,12 +57,9 @@ class HomeFragment : Fragment(),
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
 
-        homeViewModel.getTotalNews(Constants.NEW)
-        homeViewModel.getTotalNews(Constants.NEW_HIGH_LIGHT)
-        homeViewModel.getLastPage()
-        homeViewModel.getTotalPages()
-        homeViewModel.getNewsDatabase()
-        homeViewModel.getNewsHighLight(true)
+        fetchTotalNews()
+        fetchNumberOfPages()
+        fetchDatabaseNews()
 
         return binding.root
     }
@@ -127,8 +123,7 @@ class HomeFragment : Fragment(),
                     searchJob?.cancel()
                     searchJob = coroutineScope.launch {
                         delay(debouncePeriod)
-                        homeViewModel.getLastPage()
-                        homeViewModel.getTotalPages()
+                        fetchNumberOfPages()
                         homeViewModel.getAllNews(mLastPage, mPerPage, mTotalNews)
                     }
                 }
@@ -145,22 +140,18 @@ class HomeFragment : Fragment(),
         ) {
             Log.w(TAG, "update news")
             requireActivity().runOnUiThread {
-                homeViewModel.getLastPage()
-                homeViewModel.getTotalPages()
-                homeViewModel.getNewsDatabase()
-                homeViewModel.getNewsHighLight(true)
+                fetchNumberOfPages()
+                fetchDatabaseNews()
             }
         }
     }
 
     private fun renderList(list: List<New>) {
-        list.sortedByDescending { it.published_at }
-        mNews.addAll(list)
+        list.sortedByDescending { it.is_favorite }
         homeAdapterNews.submitList(list)
     }
 
     private fun renderListHorizontal(list: List<New>) {
-        mNewsCarousel = list
         adapterNewsHighlights.addData(list)
     }
 
@@ -172,76 +163,78 @@ class HomeFragment : Fragment(),
 
     private fun showLoading() {
         binding.loadingNews.visibility = View.VISIBLE
-        binding.recyclerViewNews.visibility = View.GONE
-        binding.recyclerViewNewsHighlights.visibility = View.GONE
+    }
+
+    private fun showToastError(errorMessage: String) {
+        Toast.makeText(activity, errorMessage, Toast.LENGTH_LONG).show()
+    }
+
+    private fun fetchNumberOfPages() {
+        homeViewModel.getLastPage()
+        homeViewModel.getTotalPages()
+    }
+
+    private fun fetchDatabaseNews() {
+        homeViewModel.getDatabaseNews()
+        homeViewModel.getDatabaseNewsHighLight(true)
+    }
+
+    private fun fetchTotalNews() {
+        homeViewModel.getTotalNews(Constants.NEW)
+        homeViewModel.getTotalNews(Constants.NEW_HIGH_LIGHT)
     }
 
     private fun observers() {
-        homeViewModel.newsHighlights.observe(viewLifecycleOwner, Observer {
-            when (it.status) {
-                Status.SUCCESS -> {
-                    showNews()
-                    if (it.data!!.size >= mTotalNewsHighlights) {
-                        homeViewModel.getNewsHighLight(true)
-                    }
-                }
-                Status.LOADING -> {
-                    binding.loadingNews.visibility = View.VISIBLE
-                }
-                Status.ERROR -> {
-                    showNews()
-                    Toast.makeText(activity, "${it.message}", Toast.LENGTH_LONG).show()
-                }
+        onEvent(homeViewModel.newsHighlights) { handleNewsHighLights(it) }
+        onEvent(homeViewModel.totalNewsHighLight) { mTotalNewsHighlights = it }
+        onEvent(homeViewModel.totalNews) { mTotalNews = it }
+        onEvent(homeViewModel.lastPage) { mLastPage = it }
+        onEvent(homeViewModel.totalPages) { verifyIfLastPage(it) }
+        onEvent(homeViewModel.news) { handleNewsApi(it) }
+        homeViewModel.newsDatabase.observe(viewLifecycleOwner) { handleNewsDatabase(it) }
+        homeViewModel.newsHighLight.observe(viewLifecycleOwner) { handleNewsHighLightDatabase(it) }
+    }
+
+    private fun handleNewsHighLights(news: List<New>) {
+        if (news.size >= mTotalNewsHighlights) {
+            homeViewModel.getDatabaseNewsHighLight(true)
+        }
+    }
+
+    private fun handleNewsApi(resource: Resource<List<New>>) {
+        when(resource.status) {
+            Status.SUCCESS -> {
+                showNews()
+                fetchNumberOfPages()
             }
-        })
-
-        homeViewModel.news.observe(viewLifecycleOwner, Observer {
-            when (it.status) {
-                Status.SUCCESS -> {
-                    showNews()
-                    homeViewModel.getLastPage()
-                    homeViewModel.getTotalPages()
-                }
-                Status.LOADING -> {
-                    showLoading()
-                }
-                Status.ERROR -> {
-                    Toast.makeText(activity, "${it.message}", Toast.LENGTH_LONG).show()
-                    showNews()
-                }
+            Status.LOADING -> {
+                showLoading()
             }
-        })
-
-        homeViewModel.totalNewsHighLight.observe(viewLifecycleOwner, Observer { totalNews ->
-            mTotalNewsHighlights = totalNews
-        })
-
-        homeViewModel.totalNews.observe(viewLifecycleOwner, Observer { totalNews ->
-            mTotalNews = totalNews
-        })
-
-        homeViewModel.lastPage.observe(viewLifecycleOwner, Observer { lastPage ->
-            mLastPage = lastPage
-        })
-
-        homeViewModel.totalPages.observe(viewLifecycleOwner, Observer { totalPages ->
-            mTotalPages = totalPages
-            if (mLastPage <= mTotalPages) {
-                homeViewModel.getAllNews(mLastPage, mPerPage, mTotalNews)
+            Status.ERROR -> {
+                showToastError(resource.message!!)
+                showNews()
             }
-        })
-        homeViewModel.newsDatabase.observe(viewLifecycleOwner, Observer { news ->
-            homeViewModel.getTotalNews(Constants.NEW)
-            showNews()
-            renderList(news)
-        })
+        }
+    }
 
-        homeViewModel.newsHighLight.observe(viewLifecycleOwner, Observer { news ->
-            homeViewModel.getTotalNews(Constants.NEW_HIGH_LIGHT)
-            showNews()
-            renderListHorizontal(news)
-            homeViewModel.getAllNewsHighlights(mTotalNewsHighlights)
-        })
+    private fun handleNewsDatabase(news: List<New>) {
+        fetchTotalNews()
+        showNews()
+        renderList(news)
+    }
+
+    private fun handleNewsHighLightDatabase(news: List<New>) {
+        homeViewModel.getTotalNews(Constants.NEW_HIGH_LIGHT)
+        showNews()
+        renderListHorizontal(news)
+        homeViewModel.getAllNewsHighlights(mTotalNewsHighlights)
+    }
+
+    private fun verifyIfLastPage(totalPages: Int) {
+        mTotalPages = totalPages
+        if (mLastPage <= mTotalPages) {
+            homeViewModel.getAllNews(mLastPage, mPerPage, mTotalNews)
+        }
     }
 
     override fun onDestroyView() {
@@ -264,23 +257,19 @@ class HomeFragment : Fragment(),
         myFixedRateTimer.cancel()
     }
 
-    override fun onClickNew(position: Int, aView: View) {
-        val intent = DetailActivity.newIntent(mContext, mNews[position].url!!)
+    override fun onClickNew(new: New, position: Int, aView: View) {
+        val intent = DetailActivity.newIntent(mContext, new.url!!)
         startActivity(intent)
     }
 
-    override fun onClickFavorite(position: Int, aView: View) {
-        mNews[position].is_favorite = !mNews[position].is_favorite
-        if (mNews[position].is_favorite) {
-            homeViewModel.addNewsFavorite(mNews[position])
-        } else {
-            homeViewModel.removeNewsFavorite(mNews[position])
-        }
+    override fun onClickFavorite(new: New, position: Int, aView: View) {
+        new.is_favorite = !new.is_favorite
+        homeViewModel.updateFavoriteNews(new = new)
         homeAdapterNews.notifyItemChanged(position)
     }
 
-    override fun onClickShared(position: Int, aView: View) {
-        val shareTask = mNews[position].url!!
+    override fun onClickShared(new: New, position: Int, aView: View) {
+        val shareTask = new.url!!
         val dialog =
             AlertDialog.Builder(mContext).setTitle(mContext.getString(R.string.dialog_share_title))
                 .setMessage(mContext.getString(R.string.dialog_share_message))
@@ -294,8 +283,8 @@ class HomeFragment : Fragment(),
         dialog.show()
     }
 
-    override fun onClickCarousel(position: Int, aView: View) {
-        val intent = DetailActivity.newIntent(mContext, mNews[position].url!!)
+    override fun onClickCarousel(new: New, position: Int, aView: View) {
+        val intent = DetailActivity.newIntent(mContext, new.url!!)
         startActivity(intent)
     }
 

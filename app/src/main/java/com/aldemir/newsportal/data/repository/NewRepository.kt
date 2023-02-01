@@ -35,7 +35,7 @@ class NewRepository @Inject constructor(
         return newDao.getFavorites(isFavorite)
     }
 
-    suspend fun getHighLight(highlight: Boolean): List<New> {
+    suspend fun getDatabaseNewsHighLight(highlight: Boolean): List<New> {
         return newDao.getHighLight(highlight)
     }
 

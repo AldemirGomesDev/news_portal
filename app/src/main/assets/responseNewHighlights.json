@@ -1,0 +1,45 @@
+{
+  "data":
+  [
+    {
+      "author":"Aldemir Gomes",
+      "content":"Hoje a noticia foi gerada automaricadaf",
+      "description":"Esta é uma noticia número um",
+      "highlight":true,
+      "image_url":"https://media.istockphoto.com/id/935741788/photo/bom-jesus-street.jpg?s=612x612&w=0&k=20&c=KyEaqrSHtpDKFcSiz1n8Y-1lgsHSD8i0DCr-mVlxz0s=",
+      "published_at":"2011-11-02T02:50:12.208Z",
+      "title":"Palmeiras no Morumbi e São Paulo no Allianz Parque: rivais acertam acordo com o time",
+      "url":"https://www.uol.com.br/esporte/colunas/mercado-da-bola/2023/01/29/palmeiras-no-morumbi-e-sao-paulo-no-allianz-parque-rivais-acertam-acordo.htm"
+    },
+    {
+      "author":"Aldemir Silva",
+      "content":"Hoje a noticia foi gerada automaricadaf",
+      "description":"Esta é uma noticia número um",
+      "highlight":true,
+      "image_url":"https://conteudo.imguol.com.br/c/parceiros/f3/2023/01/14/allianz-parque-palmeiras-1673731970307_v2_900x506.jpg.webp",
+      "published_at":"2011-11-02T02:50:12.208Z",
+      "title":"Moraes nega pedido e mantém posse de 11 deputados bolsonaristas acusados",
+      "url":"https://noticias.uol.com.br/politica/ultimas-noticias/2023/01/29/moraes-nega-pedido-e-mantem-posse-de-11-deputados-bolsonaristas.htm"
+    },
+    {
+      "author":"Aldemir Silva",
+      "content":"Hoje a noticia foi gerada automaricadaf",
+      "description":"Esta é uma noticia número um",
+      "highlight":true,
+      "image_url":"https://campomourao.unespar.edu.br/imagens/ultimas-noticias.gif/@@images/image.gif",
+      "published_at":"2011-11-02T02:50:12.208Z",
+      "title":"Noticia: Argentina é o pais com maior numero de desempregado da america central",
+      "url":"https://noticias.uol.com.br/politica/ultimas-noticias/2023/01/29/moraes-nega-pedido-e-mantem-posse-de-11-deputados-bolsonaristas.htm"
+    },
+    {
+      "author":"Aldemir Silva",
+      "content":"Hoje a noticia foi gerada automaricadaf",
+      "description":"Esta é uma noticia número um",
+      "highlight":true,
+      "image_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ5hcHN_9qpc4ti2NeOEB3cqRoCG8vMLcMC2w&usqp=CAU",
+      "published_at":"2011-11-02T02:50:12.208Z",
+      "title":"Qual investimento é seguro, rende bem e permite resgatar a qualquer hora a mais",
+      "url":"https://noticias.uol.com.br/politica/ultimas-noticias/2023/01/29/moraes-nega-pedido-e-mantem-posse-de-11-deputados-bolsonaristas.htm"
+    }
+  ]
+}

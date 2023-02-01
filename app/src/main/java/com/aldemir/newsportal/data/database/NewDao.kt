@@ -7,10 +7,10 @@ import com.aldemir.newsportal.models.New
 @Dao
 interface NewDao {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(new: New): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(news: List<New>): List<Long>
 
     @Update

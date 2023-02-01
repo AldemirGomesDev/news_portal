@@ -1,6 +1,8 @@
 package com.aldemir.newsportal.api.di
 
+import android.content.Context
 import com.aldemir.newsportal.BuildConfig
+import com.aldemir.newsportal.MyApplication
 import com.aldemir.newsportal.api.*
 import com.aldemir.newsportal.api.models.ResponseLogin
 import com.aldemir.newsportal.util.Constants
@@ -8,6 +10,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.github.brunogabriel.mockpinterceptor.MockPInterceptor
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -20,6 +23,15 @@ object RetrofitModule {
 
     @Provides
     fun provideBaseUrl() = Constants.BASE_URL
+
+    @Provides
+    fun provideMockpInterceptor(context: Context) = MockPInterceptor
+        .Builder(context)
+        .addDelayInMillis(3_000L, 5_000L)
+        .build()
+
+    @Provides
+    fun provideContext() = MyApplication.appContext
 
 
     @Provides
@@ -45,9 +57,10 @@ object RetrofitModule {
     }
 
     @Provides
-    fun provideOkHttpClient(interceptor: Interceptor) = if (BuildConfig.DEBUG){
+    fun provideOkHttpClient(interceptor: Interceptor, mockPInterceptor: MockPInterceptor) = if (BuildConfig.DEBUG){
         OkHttpClient.Builder()
             .addInterceptor(interceptor)
+            .addInterceptor(mockPInterceptor)
             .build()
     }else{
         OkHttpClient

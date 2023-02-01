@@ -19,7 +19,7 @@ import java.lang.Exception
 class HomeAdapterNews : ListAdapter<New, HomeAdapterNews.ViewHolder>(CoinItemCallback) {
 
     companion object {
-        const val TAG = "HomeAdapterNews"
+        const val TAG = "HomeFragment"
     }
 
     lateinit var mClickListener: ClickListener
@@ -39,9 +39,9 @@ class HomeAdapterNews : ListAdapter<New, HomeAdapterNews.ViewHolder>(CoinItemCal
     }
 
     interface ClickListener {
-        fun onClickNew(position: Int, aView: View)
-        fun onClickFavorite(position: Int, aView: View)
-        fun onClickShared(position: Int, aView: View)
+        fun onClickNew(new: New, position: Int, aView: View)
+        fun onClickFavorite(new: New, position: Int, aView: View)
+        fun onClickShared(new: New, position: Int, aView: View)
     }
 
     object CoinItemCallback : DiffUtil.ItemCallback<New>() {
@@ -118,16 +118,16 @@ class HomeAdapterNews : ListAdapter<New, HomeAdapterNews.ViewHolder>(CoinItemCal
     inner class ViewHolder(val binding: ItemNewsBinding) : RecyclerView.ViewHolder(binding.root),
         View.OnClickListener {
         override fun onClick(v: View) {
-            mClickListener.onClickNew(adapterPosition, v)
+            mClickListener.onClickNew(currentList[adapterPosition], adapterPosition, v)
         }
 
         init {
             binding.root.setOnClickListener(this)
             binding.buttonFavorite.setOnClickListener {
-                mClickListenerFavorite.onClickFavorite(adapterPosition, it)
+                mClickListenerFavorite.onClickFavorite(currentList[adapterPosition], adapterPosition, it)
             }
             binding.buttonShared.setOnClickListener {
-                mClickListenerShared.onClickShared(adapterPosition, it)
+                mClickListenerShared.onClickShared(currentList[adapterPosition], adapterPosition, it)
             }
         }
     }

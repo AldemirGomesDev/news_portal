@@ -13,7 +13,7 @@ interface ApiHelper {
         current_page: String,
         per_page: String,
         published_at: String
-    ): ResponseNew
+    ): Response<ResponseNew>
 
     suspend fun getAllNewsHighlights(): Response<ResponseNewHighlights>
 }
